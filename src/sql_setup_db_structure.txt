@@ -41,8 +41,8 @@ DECLARE
     in_export_cells_table_name              "USER_TABLES"."TABLE_NAME"%TYPE := in_program_name || '_SET_CELLS';
     in_export_cells_table_attributes        "PLSI_VARCHAR2_64CHAR_AA" := "PLSI_VARCHAR2_64CHAR_AA"(
                                                                             1 => in_export_main_table_attributes(1),
-                                                                            2 => 'ROW_INDEX',
-                                                                            3 => 'COL_INDEX',
+                                                                            2 => 'COL_INDEX',
+                                                                            3 => 'ROW_INDEX',
                                                                             4 => 'VALUE'
                                                                         );
     in_export_cells_table_cell_type         VARCHAR2(64 CHAR) := 'VARCHAR2(511 BYTE)';
