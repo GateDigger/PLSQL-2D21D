@@ -3,27 +3,28 @@ accepts a SQL SELECT statement and inserts the associated result set into a cell
 
 ## Overview
 The setup script [sql_setup_db_structure.txt](src/sql_setup_db_structure.txt) constructs, prints and optionally executes DDL statements to setup a database structure consisting of the following:
-1. Input - Main definition table consisting of
+1. Input - Main definition table consisting of the following columns:
    - an artificial primary key
    - a timestamp of creation
    - a SQL SELECT statement to execute
    - a timestamp of processing start
    - a timestamp of processing end
       - with an optional result message
+   - a bulk fetch size parameter
    - optional timestamp and variable name
      - the main procedure is capable of substituting one into the other before execution
-2. Output - Header table consisting of
+2. Output - Header table consisting of the following columns:
    - a reference to the main definition table
    - information about columns of the result set
      - an index
      - a name
      - type code
      - type length
-3. Output - Cell table consisting of
+3. Output - Cell table consisting of the following columns:
    - a reference to the column table (main id and column index)
    - a row index
    - the content of the cell within the result set
-4. Output - Log table consisting of
+4. Output - Log table consisting of the following columns:
    - a timestamp of the message
    - the user creating the message
    - an optional source of the message
