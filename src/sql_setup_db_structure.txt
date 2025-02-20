@@ -4,7 +4,7 @@
 DECLARE
 --parameters
     --supress EXECUTE IMMEDIATE
-    in_noexec                                   BOOLEAN := TRUE;
+    in_noexec                                   BOOLEAN := FALSE;
     in_create_tables                            BOOLEAN := TRUE;
     in_compile_triggers                         BOOLEAN := TRUE;
     in_compile_procedures                       BOOLEAN := TRUE;
@@ -96,7 +96,7 @@ BEGIN
         WHERE "USERNAME" = in_log_table_owner;
     IF v_count != 1 THEN
         SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') INTO in_log_table_owner FROM dual;
-        DBMS_OUTPUT.PUT_LINE('in_log_table_owner := ''' || in_log_table_owner || ''';');
+        DBMS_OUTPUT.PUT_LINE('--in_log_table_owner := ''' || in_log_table_owner || ''';');
         DBMS_OUTPUT.NEW_LINE();
     END IF;
 
@@ -104,14 +104,14 @@ BEGIN
         'CREATE TABLE "' || in_log_table_owner || '"."' || in_log_table_name || '"' || in_lb
                 || in_tab || 'AS SELECT' || in_lb
           || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS TIMESTAMP WITH TIME ZONE)', 47, ' ') ||  ' AS "' || in_log_table_attributes(1) || '",' || in_lb
-          || RPAD (in_tab || in_tab || in_tab || 'S."USERNAME"', 47, ' ') ||                            ' AS "' || in_log_table_attributes(2) || '",' || in_lb
+          || RPAD (in_tab || in_tab || in_tab || 'U."USERNAME"', 47, ' ') ||                            ' AS "' || in_log_table_attributes(2) || '",' || in_lb
           || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS VARCHAR2(128 CHAR))', 47, ' ') ||        ' AS "' || in_log_table_attributes(3) || '",' || in_lb
           || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS CHAR(1 CHAR))', 47, ' ') ||              ' AS "' || in_log_table_attributes(4) || '",' || in_lb
           || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS VARCHAR2(512 CHAR))', 47, ' ') ||        ' AS "' || in_log_table_attributes(5) || '"' || in_lb
-                || in_tab || in_tab || 'FROM "ALL_USERS" S' || in_lb
-                || in_tab || in_tab || 'WHERE 0 = 1';
+                || in_tab || in_tab || 'FROM "ALL_USERS" U' || in_lb
+                || in_tab || in_tab || 'WHERE NULL IS NOT NULL';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -132,7 +132,7 @@ BEGIN
         'ALTER TABLE "' || in_log_table_owner || '"."' || in_log_table_name || '"' || in_lb
             || in_tab || 'ADD CONSTRAINT "' || in_log_table_name || '__' || in_log_table_attributes(4) || '_CH"' || ' CHECK ("' || in_log_table_attributes(4) || '" IN (''I'', ''W'', ''E'')) ENABLE';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -227,7 +227,7 @@ BEGIN
         WHERE "USERNAME" = in_log_procedure_owner;
     IF v_count != 1 THEN
         SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') INTO in_log_procedure_owner FROM dual;
-        DBMS_OUTPUT.PUT_LINE('in_log_procedure_owner := ''' || in_log_procedure_owner || ''';');
+        DBMS_OUTPUT.PUT_LINE('--in_log_procedure_owner := ''' || in_log_procedure_owner || ''';');
         DBMS_OUTPUT.NEW_LINE();
     END IF;
 
@@ -269,25 +269,29 @@ BEGIN
         WHERE "USERNAME" = in_export_tables_owner;
     IF v_count != 1 THEN
         SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') INTO in_export_tables_owner FROM dual;
-        DBMS_OUTPUT.PUT_LINE('in_export_tables_owner := ''' || in_export_tables_owner || ''';');
+        DBMS_OUTPUT.PUT_LINE('--in_export_tables_owner := ''' || in_export_tables_owner || ''';');
         DBMS_OUTPUT.NEW_LINE();
     END IF;
 
     v_sql :=
         'CREATE TABLE "' || in_export_tables_owner || '"."' || in_export_main_table_name || '"' || in_lb
             || '(' || in_lb
-       || RPAD(in_tab || '"' || in_export_main_table_attributes(1) || '"', 47, ' ') || ' INTEGER GENERATED ALWAYS AS IDENTITY (MINVALUE 1 NOMAXVALUE INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE NOKEEP NOSCALE) CONSTRAINT "' || in_export_main_table_name || '__PK" PRIMARY KEY USING INDEX ENABLE,' || in_lb
+       || RPAD(in_tab || '"' || in_export_main_table_attributes(1) || '"', 47, ' ') || ' INTEGER GENERATED ALWAYS AS IDENTITY (MINVALUE 1 NOMAXVALUE INCREMENT BY 1 START WITH 1 NOCACHE ORDER NOCYCLE NOKEEP NOSCALE)' || in_lb
+       || RPAD(in_tab, 48, ' ')                                                     || in_tab || in_tab || 'CONSTRAINT "' || in_export_main_table_name || '__PK" PRIMARY KEY USING INDEX ENABLE,' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(2) || '"', 47, ' ') || ' TIMESTAMP WITH TIME ZONE,' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(3) || '"', 47, ' ') || ' TIMESTAMP WITH TIME ZONE,' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(4) || '"', 47, ' ') || ' TIMESTAMP WITH TIME ZONE,' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(5) || '"', 47, ' ') || ' VARCHAR2(512 CHAR),' || in_lb
-       || RPAD(in_tab || '"' || in_export_main_table_attributes(6) || '"', 47, ' ') || ' ' || in_export_main_table_sql_stmt_type || ' CONSTRAINT "' || in_export_main_table_name || '__' || in_export_main_table_attributes(6) || '_NN" NOT NULL ENABLE,' || in_lb
-       || RPAD(in_tab || '"' || in_export_main_table_attributes(7) || '"', 47, ' ') || ' INTEGER DEFAULT ' || in_export_procedure_bulk_fetch_size_dflt || ' CONSTRAINT "' || in_export_main_table_name || '__' || in_export_main_table_attributes(7) || '_CH" CHECK ("' || in_export_main_table_attributes(7) || '" IS NOT NULL AND "' || in_export_main_table_attributes(7) || '" BETWEEN 4 AND 4096) ENABLE,' || in_lb
+       || RPAD(in_tab || '"' || in_export_main_table_attributes(6) || '"', 47, ' ') || ' ' || in_export_main_table_sql_stmt_type || in_lb
+       || RPAD(in_tab, 48, ' ')                                                     || in_tab || in_tab || 'CONSTRAINT "' || in_export_main_table_name || '__' || in_export_main_table_attributes(6) || '_NN" NOT NULL ENABLE,' || in_lb
+       || RPAD(in_tab || '"' || in_export_main_table_attributes(7) || '"', 47, ' ') || ' INTEGER DEFAULT ' || in_export_procedure_bulk_fetch_size_dflt || in_lb
+       || RPAD(in_tab, 48, ' ')                                                     || in_tab || in_tab || 'CONSTRAINT "' || in_export_main_table_name || '__' || in_export_main_table_attributes(7) || '_NN" NOT NULL ENABLE' || in_lb
+       || RPAD(in_tab, 48, ' ')                                                     || in_tab || in_tab || 'CONSTRAINT "' || in_export_main_table_name || '__' || in_export_main_table_attributes(7) || '_CH" CHECK ("' || in_export_main_table_attributes(7) || '" BETWEEN 4 AND 4096) ENABLE,' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(8) || '"', 47, ' ') || ' VARCHAR2(32 CHAR),' || in_lb
        || RPAD(in_tab || '"' || in_export_main_table_attributes(9) || '"', 47, ' ') || ' TIMESTAMP WITH TIME ZONE' || in_lb
             || ')';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -463,17 +467,24 @@ BEGIN
     v_sql :=
         'CREATE TABLE "' || in_export_tables_owner || '"."' || in_export_columns_table_name || '"' || in_lb
             || '(' || in_lb
-        || RPAD(in_tab || '"' || in_export_main_table_attributes(1) || '"', 47, ' ')    || ' CONSTRAINT "' || in_export_columns_table_name || '_FK" REFERENCES "' || in_export_tables_owner || '"."' || in_export_main_table_name || '"("' || in_export_main_table_attributes(1) || '") ON DELETE CASCADE NOT NULL ENABLE,' || in_lb
-        || RPAD(in_tab || '"' || in_export_columns_table_attributes(2) || '"', 47, ' ') || ' INTEGER CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(2) || '_NN" NOT NULL ENABLE,' || in_lb
-        || RPAD(in_tab || '"' || in_export_columns_table_attributes(3) || '"', 47, ' ') || ' ' || in_export_cells_table_cell_type || ' CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(3) || '_NN" NOT NULL ENABLE,' || in_lb
-        || RPAD(in_tab || '"' || in_export_columns_table_attributes(4) || '"', 47, ' ') || ' INTEGER CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(4) || '_NN" NOT NULL ENABLE,' || in_lb
-        || RPAD(in_tab || '"' || in_export_columns_table_attributes(5) || '"', 47, ' ') || ' INTEGER CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(5) || '_NN" NOT NULL ENABLE,' || in_lb
-        || RPAD(in_tab || '"' || in_export_columns_table_attributes(6) || '"', 47, ' ') || ' NUMBER(1) CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(6) || '_NN" NOT NULL ENABLE,' || in_lb
+            || in_tab || '"' || in_export_main_table_attributes(1) || '"' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__FK" REFERENCES "' || in_export_tables_owner || '"."' || in_export_main_table_name || '"("' || in_export_main_table_attributes(1) || '") ON DELETE CASCADE' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_main_table_attributes(1) || '_NN" NOT NULL ENABLE,' || in_lb
+        || RPAD(in_tab || '"' || in_export_columns_table_attributes(2) || '"', 47, ' ') || ' INTEGER' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(2) || '_NN" NOT NULL ENABLE,' || in_lb
+        || RPAD(in_tab || '"' || in_export_columns_table_attributes(3) || '"', 47, ' ') || ' ' || in_export_cells_table_cell_type || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(3) || '_NN" NOT NULL ENABLE,' || in_lb
+        || RPAD(in_tab || '"' || in_export_columns_table_attributes(4) || '"', 47, ' ') || ' INTEGER' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(4) || '_NN" NOT NULL ENABLE,' || in_lb
+        || RPAD(in_tab || '"' || in_export_columns_table_attributes(5) || '"', 47, ' ') || ' INTEGER' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(5) || '_NN" NOT NULL ENABLE,' || in_lb
+        || RPAD(in_tab || '"' || in_export_columns_table_attributes(6) || '"', 47, ' ') || ' NUMBER(1)' || in_lb
+        || RPAD(in_tab, 48, ' ')                                                        || in_tab || in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__' || in_export_columns_table_attributes(6) || '_NN" NOT NULL ENABLE,' || in_lb
             || in_lb
         || RPAD(in_tab || 'CONSTRAINT "' || in_export_columns_table_name || '__PK"', 47, ' ') || ' PRIMARY KEY ("' || in_export_main_table_attributes(1) || '", "' || in_export_columns_table_attributes(2) || '") USING INDEX ENABLE' || in_lb
             || ')';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -548,9 +559,9 @@ BEGIN
        || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS INTEGER)', 47, ' ') || ' AS "' || in_export_cells_table_attributes(3) || '",' || in_lb
        || RPAD (in_tab || in_tab || in_tab || 'CAST(NULL AS ' || in_export_cells_table_cell_type || ')', 47, ' ') || ' AS "' || in_export_cells_table_attributes(4) || '"' || in_lb
             || in_tab || in_tab || ' FROM "' || in_export_tables_owner || '"."' || in_export_columns_table_name || '" S' || in_lb
-            || in_tab || in_tab || ' WHERE 0 = 1';
+            || in_tab || in_tab || ' WHERE NULL IS NOT NULL';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -565,13 +576,12 @@ BEGIN
                 in_noexec := TRUE;
         END;
     END IF;
-
 
     v_sql :=
         'ALTER TABLE "' || in_export_tables_owner || '"."' || in_export_cells_table_name || '"' || in_lb
-            || in_tab || 'ADD CONSTRAINT "' || in_export_cells_table_name || '__' || in_export_cells_table_attributes(3) || '_NN" CHECK ("' || in_export_cells_table_attributes(3) || '" IS NOT NULL) ENABLE';
+            || in_tab || 'ADD CONSTRAINT "' || in_export_cells_table_name || '__' || in_export_cells_table_attributes(3) || '_NN" CHECK("' || in_export_cells_table_attributes(3) || '" IS NOT NULL) ENABLE';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -586,13 +596,12 @@ BEGIN
                 in_noexec := TRUE;
         END;
     END IF;
-
 
     v_sql :=
         'ALTER TABLE "' || in_export_tables_owner || '"."' || in_export_cells_table_name || '"' || in_lb
             || in_tab || 'ADD CONSTRAINT "' || in_export_cells_table_name || '__FK" FOREIGN KEY("' || in_export_main_table_attributes(1) || '", "' || in_export_columns_table_attributes(2) || '") REFERENCES "' || in_export_tables_owner || '"."' || in_export_columns_table_name || '"("' || in_export_main_table_attributes(1) || '", "' || in_export_columns_table_attributes(2) || '") ON DELETE CASCADE ENABLE';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -607,13 +616,12 @@ BEGIN
                 in_noexec := TRUE;
         END;
     END IF;
-
 
     v_sql :=
         'ALTER TABLE "' || in_export_tables_owner || '"."' || in_export_cells_table_name || '"' || in_lb
             || in_tab || 'ADD CONSTRAINT "' || in_export_cells_table_name || '__PK" PRIMARY KEY ("' || in_export_main_table_attributes(1) || '", "' || in_export_columns_table_attributes(2) || '", "' || in_export_cells_table_attributes(3) || '") USING INDEX ENABLE';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || ';');
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_create_tables THEN
         BEGIN
@@ -628,7 +636,6 @@ BEGIN
                 in_noexec := TRUE;
         END;
     END IF;
-
 
     v_sql :=
         'CREATE OR REPLACE TRIGGER "' || in_export_tables_owner || '"."' || in_export_cells_table_name || '_UPD"' || in_lb
@@ -896,6 +903,31 @@ BEGIN
         || in_tab || in_tab || in_tab || '"' || in_log_procedure_owner || '"."' || in_log_procedure_name || '"(''' || in_export_procedure_name || '('' || in_' || LOWER(in_export_main_table_attributes(1)) || ' || '')'', ''I'', ''v_cursor IS CLOSED'');' || in_lb
         || in_tab || in_tab || 'END IF;' || in_lb
         || in_tab || in_tab || 'ROLLBACK;' || in_lb
+        || in_lb
+        || '/*' || in_lb
+        || in_tab || 'MIT License' || in_lb
+        || in_lb
+        || in_tab || 'Copyright (c) 2025 GateDigger' || in_lb
+        || in_lb
+        || in_tab || 'Permission is hereby granted, free of charge, to any person obtaining a copy' || in_lb
+        || in_tab || 'of this software and associated documentation files (the "Software"), to deal' || in_lb
+        || in_tab || 'in the Software without restriction, including without limitation the rights' || in_lb
+        || in_tab || 'to use, copy, modify, merge, publish, distribute, sublicense, and/or sell' || in_lb
+        || in_tab || 'copies of the Software, and to permit persons to whom the Software is' || in_lb
+        || in_tab || 'furnished to do so, subject to the following conditions:' || in_lb
+        || in_lb
+        || in_tab || 'The above copyright notice and this permission notice shall be included in all' || in_lb
+        || in_tab || 'copies or substantial portions of the Software.' || in_lb
+        || in_lb
+        || in_tab || 'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR' || in_lb
+        || in_tab || 'IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,' || in_lb
+        || in_tab || 'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE' || in_lb
+        || in_tab || 'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER' || in_lb
+        || in_tab || 'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,' || in_lb
+        || in_tab || 'OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE' || in_lb
+        || in_tab || 'SOFTWARE.' || in_lb
+        || '*/' || in_lb
+        || in_lb
         --|| in_tab || in_tab || 'RAISE;' || in_lb
         || 'END "' || in_export_procedure_name || '";';
 
