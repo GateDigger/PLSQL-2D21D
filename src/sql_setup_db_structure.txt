@@ -935,7 +935,7 @@ BEGIN
         --|| in_tab || in_tab || 'RAISE;' || in_lb
         || 'END "' || in_export_procedure_name || '";';
 
-    DBMS_OUTPUT.PUT_LINE(v_sql);
+    DBMS_OUTPUT.PUT_LINE(v_sql || in_stmt_terminal);
     DBMS_OUTPUT.NEW_LINE();
     IF NOT in_noexec AND in_compile_procedures THEN
         BEGIN
