@@ -877,7 +877,7 @@ BEGIN
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'DBMS_SQL.COLUMN_VALUE(v_cursor, i_col, v_tmp_tbl_' || i_type_code || ');' || in_lb
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'i_bulk := 0;' || in_lb
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'LOOP' || in_lb
-                || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'EXIT WHEN i_bulk = v_row_count;' || in_lb
+                || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'EXIT WHEN i_bulk >= v_row_count;' || in_lb
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'INSERT INTO "' || in_export_tables_owner || '"."' || in_export_cells_table_name || '" ("' || in_export_main_table_attributes('id') || '", "' || in_export_columns_table_attributes('index') || '", "' || in_export_cells_table_attributes('rowindex') || '", "' || in_export_cells_table_attributes('value') || '")' || in_lb
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'VALUES (in_' || LOWER(in_export_main_table_attributes('id')) || ', i_col, i_row + i_bulk, v_tmp_tbl_' || i_type_code || '(i_row + i_bulk));' || in_lb
                 || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || in_tab || 'i_bulk := i_bulk + 1;' || in_lb
@@ -955,3 +955,4 @@ EXCEPTION
     WHEN OTHERS THEN
         DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
+
